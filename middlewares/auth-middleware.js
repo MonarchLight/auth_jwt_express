@@ -1,11 +1,12 @@
 "use strict";
 
+import * as tokenService from "../service/token-service.js";
 import { ApiError } from "../exceptions/api-error.js";
-import { TokenService } from "../service/token-service.js";
-
-const tokenService = new TokenService();
 
 export const authMiddleware = (req, res, next) => {
+    if (req.method == 'OPTIONS') {
+        next();
+    }
     try {
         const authorizationHeader = req.headers.authorization;
         if (!authorizationHeader) {
@@ -27,4 +28,4 @@ export const authMiddleware = (req, res, next) => {
     } catch (error) {
         return next(ApiError.UnautharizedError());
     }
-}
+};
