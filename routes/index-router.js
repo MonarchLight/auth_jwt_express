@@ -20,6 +20,6 @@ router.post('/singUp',
     .post('/logout', controller.logout)
     .get('/activate/:link', controller.activate)
     //.get('/refresh', controller.refresh)
-    .get('/users', authMiddleware, roleMiddle(['Admin']), controller.getUsers)
-    .delete('/remove-user/', controller.removeUser)
-    .put('/edit-user', controller.editUser);
+    .get('/users', authMiddleware, roleMiddle(['User']), controller.getUsers)
+    .delete('/remove-user/:id', authMiddleware, controller.removeUser)
+    .put('/edit-user/:id', authMiddleware, controller.editUser);

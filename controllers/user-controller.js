@@ -37,9 +37,9 @@ export const login = async (req, res, next) => {
 
 export const logout = async (req, res, next) => {
     try {
-        const { refreshToken } = req.cookies;
+        //const { refreshToken } = req.cookies;
         const token = await userService.logout(refreshToken);
-        res.clearCookie('refreshToken');
+        //res.clearCookie('refreshToken');
         return res.status(200).json(token);
     } catch (error) {
         next(error);
@@ -78,20 +78,29 @@ export const getUsers = async (req, res, next) => {
 };
 
 export const removeUser = async (req, res, next) => {
-
     try {
-        const users = await userService.removeUser();
-        res.status(200).json()
+        const { id } = req.params;
+
+        console.log(await userService.removeUser(id));
+
+        res.status(200).json({ message: 'Your account has been removed.' })
     } catch (error) {
         next(error);
     }
 };
 
 export const editUser = async (req, res, next) => {
-
     try {
-        const users = await userService.editUser();
-        res.status(200).json()
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return next(ApiError.BadRequest('Validation error.', errors.array()));
+        }
+
+        const { email, password } = req.body;
+        const { id } = req.params;
+
+        const userData = await userService.editUser(id, email, password);
+        res.status(200).json({ userData, message: 'Your account successfully updated.' })
     } catch (error) {
         next(error);
     }

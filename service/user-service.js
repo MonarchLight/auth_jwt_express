@@ -11,12 +11,16 @@ import { config } from '../config.js';
 import * as tokenService from "./token-service.js";
 import { ApiError } from "../exceptions/api-error.js";
 
+function errors(arg, message) {
+    if (!arg) {
+        throw ApiError.BadRequest(message);
+    }
+}
 
 export const singUp = async (email, password) => {
     const candidate = await userModel.findOne({ email });
-    if (candidate) {
-        throw ApiError.BadRequest("That email is taken. Try another.");
-    }
+    errors(!candidate, 'That email is taken. Try another.')
+
     const salt = bcrypt.genSaltSync(10);
     const hashPassword = await bcrypt.hash(password, salt);
     const activationLink = uuidv4();
@@ -35,9 +39,8 @@ export const singUp = async (email, password) => {
 
 export const activate = async (activationLink) => {
     const user = await userModel.findOne({ activationLink });
-    if (!user) {
-        throw ApiError.BadRequest('Incorrect validation link.');
-    }
+    errors(user, 'Incorrect validation link.');
+
     user.activationLink = null;
     user.isActivated = true;
     await user.save();
@@ -45,14 +48,10 @@ export const activate = async (activationLink) => {
 
 export const login = async (email, password) => {
     const user = await userModel.findOne({ email });
-    if (!user) {
-        throw ApiError.BadRequest(`Couldn't find your account.`);
-    }
+    errors(user, `Couldn't find your account.`);
 
     const isPassEquals = await bcrypt.compare(password, user.password);
-    if (!isPassEquals) {
-        throw ApiError.BadRequest('Password is not correct.');
-    }
+    errors(isPassEquals, 'Password is not correct.');
 
     const userDto = new UserDto(user);
 
@@ -94,16 +93,23 @@ export const getAllUsers = async () => {
     return users;
 };
 
-export const removeUser = async () => {
-    const user = await userModel.findByIdAndRemove({ _id });
-    if (!user) {
-        throw ApiError.BadRequest(`Couldn't find your account.`);
-    }
+export const removeUser = async (id) => {
+    const user = await userModel.findByIdAndRemove(id);
+    errors(user, `Couldn't find your account.`);
+
+    await tokenService.removeToken(refreshToken);
 };
 
-export const editUser = async () => {
-    const user = await userModel.findByIdAndUpdate({ _id });
-    if (!user) {
-        throw ApiError.BadRequest(`Couldn't find your account.`);
-    }
+export const editUser = async (id, email, password) => {
+    const salt = bcrypt.genSaltSync(10);
+    const hashPassword = await bcrypt.hash(password, salt);
+
+    const user = await userModel.findByIdAndUpdate(id, { email, password: hashPassword });
+    errors(user, `Couldn't find your account.`);
+
+    const userDto = new UserDto(user);
+    const tokens = tokenService.generateToken({ ...userDto });
+
+    await tokenService.saveToken(userDto.id, tokens.refreshToken);
+    return { ...tokens, user: userDto };
 };
