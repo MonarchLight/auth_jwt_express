@@ -34,7 +34,6 @@ export const roleMiddle = (roles) => {
             }
             next();
         } catch (error) {
-            console.log(error);
             return next(ApiError.UnautharizedError());
         }
     }

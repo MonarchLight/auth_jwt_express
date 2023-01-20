@@ -8,6 +8,7 @@ import mongoose from 'mongoose';
 import { router } from './routes/index-router.js';
 import { config } from './config.js';
 import { errorMiddlewares } from './middlewares/error-middleware.js';
+import { logger } from './logger/logger.js';
 
 mongoose.set('strictQuery', false);
 
@@ -29,9 +30,9 @@ const start = async () => {
             useNewUrlParser: true,
             useUnifiedTopology: true
         })
-        app.listen(PORT, () => console.log(`Server started on port ${PORT}`))
+        app.listen(PORT, () => logger.info(`Server started on port ${PORT}`))
     } catch (error) {
-        console.log(error);
+        logger.error(error);
     }
 };
 
